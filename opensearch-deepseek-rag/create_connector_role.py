@@ -1,6 +1,9 @@
 # Copyright opensearch-examples contributors
 # SPDX-License-Identifier: Apache-2.0
-
+'''
+This module constructs an IAM role and policy that enables your account
+to create an OpenSearch connector in your Amazon OpenSearch Service domain.
+'''
 
 import boto3
 import json
