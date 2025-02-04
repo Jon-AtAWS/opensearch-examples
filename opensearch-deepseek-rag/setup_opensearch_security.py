@@ -40,5 +40,5 @@ client = OpenSearch(
 )
 client.security.create_role_mapping('ml_full_access', body=role_mapping)
 
-print(f'ml_full_access role mapping is now {client.security.get_role_mapping('ml_full_access')}')
+print(f'ml_full_access role mapping is now {client.security.get_role_mapping("ml_full_access")}')
 

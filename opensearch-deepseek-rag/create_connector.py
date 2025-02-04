@@ -62,6 +62,7 @@ payload = {
 headers = {"Content-Type": "application/json"}
 
 r = requests.post(url, auth=awsauth, json=payload, headers=headers)
+print(r.text)
 connector_id = json.loads(r.text)['connector_id']
 print(connector_id)
 
