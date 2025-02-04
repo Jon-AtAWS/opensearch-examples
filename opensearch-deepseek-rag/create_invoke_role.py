@@ -8,7 +8,7 @@ import os
 
 invoke_deepseek_policy_name = 'invoke_deepseek_policy'
 invoke_deepseek_role_name = 'invoke_deepseek_role'
-sagemaker_model_inference_endpoint_arn = os.environ['SAGEMAKER_MODEL_INFERENCE_ENDPOINT_ARN']
+sagemaker_model_inference_endpoint_arn = os.environ['SAGEMAKER_MODEL_INFERENCE_ARN']
 
 
 policy = {
