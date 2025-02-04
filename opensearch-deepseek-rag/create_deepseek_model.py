@@ -4,7 +4,7 @@
 
 import os
 import requests
-from requests_aws4auth import AWS4Auth
+
 
 opensearch_service_api_endpoint = os.environ['OPENSEARCH_SERVICE_DOMAIN_ENDPOINT']
 opensearch_user_name = os.environ['OPENSEARCH_SERVICE_ADMIN_USER']
@@ -19,19 +19,6 @@ headers = {"Content-Type": "application/json"}
 
 
 ########################################################################################
-# Create a Model Group for the model
-path = '/_plugins/_ml/model_groups/_register'
-url = opensearch_service_api_endpoint + path
-payload = {
-    "name": "Sagemaker DeepSeek model v2",
-    "description": "Model group for DeepSeek model"
-}
-r = requests.post(url, auth=userauth, json=payload, headers=headers)
-model_group_id = r.json()[f'model_group_id']
-print(f'model_group_id: {model_group_id}')
-
-
-########################################################################################
 # Register the model
 path = '/_plugins/_ml/models/_register'
 url = opensearch_service_api_endpoint + path
@@ -39,7 +26,6 @@ payload = {
   "name": "Sagemaker DeepSeek R1 model",
   "function_name": "remote",
   "description": "DeepSeek R1 model on Sagemaker",
-  "model_group_id": model_group_id,
   "connector_id": connector_id
 }
 r = requests.post(url, auth=userauth, json=payload, headers=headers)

@@ -1,6 +1,8 @@
 # Copyright opensearch-examples contributors
 # SPDX-License-Identifier: Apache-2.0
-
+#
+# Creates an AWS IAM role that OpenSearch service assumes to make
+# calls to the SageMaker inference endpoint.
 
 import boto3
 import json

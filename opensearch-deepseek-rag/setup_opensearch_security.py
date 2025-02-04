@@ -7,6 +7,7 @@ from opensearchpy import OpenSearch
 import os
 
 
+# Read the configuration from environment variables.
 opensearch_service_api_endpoint = os.environ['OPENSEARCH_SERVICE_DOMAIN_ENDPOINT']
 opensearch_user_name = os.environ['OPENSEARCH_SERVICE_ADMIN_USER']
 opensearch_user_password = os.environ['OPENSEARCH_SERVICE_ADMIN_PASSWORD']
@@ -21,6 +22,8 @@ if opensearch_service_api_endpoint.endswith('/'):
   opensearch_service_api_endpoint = opensearch_service_api_endpoint[:-1]
 
 
+# Construct the backend roles. OpenSearch's fine-grained access control will detect
+# signed traffic and map these entities to the ml_full_access role.
 sts = boto3.client('sts')
 account_id = sts.get_caller_identity()['Account']
 lambda_invoke_ml_commons_role_arn = f'arn:aws:iam::{account_id}:role/{lambda_invoke_ml_commons_role_name}'
