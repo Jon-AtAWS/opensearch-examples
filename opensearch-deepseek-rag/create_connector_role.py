@@ -60,6 +60,10 @@ iam = boto3.client('iam')
 sts = boto3.client('sts')
 
 
+# First validate that the script won't overwrite an existing role or policy. If you receive
+# either exception, change the global variable above to give it a different name
+#
+# Validate that the script won't overwrite an existing policy.  
 existing_policy = None
 try:
   account_id = sts.get_caller_identity()['Account']
@@ -68,18 +72,26 @@ try:
   if existing_policy:
     raise Exception(f"Policy {create_connector_policy_name} already exists. Please set another policy name")
 except iam.exceptions.NoSuchEntityException:
+  # The policy document does not exist. That's the expected result, so there's
+  # nothing additional to do
   pass
 
 
+# Validate that the script won't overwrite an existing role.
 existing_role = None
 try:
   existing_role = iam.get_role(RoleName=create_connector_role_name)
   if existing_role:
     raise Exception(f"Role {create_connector_role_name} already exists. Please set another role name")
 except iam.exceptions.NoSuchEntityException:
+  # The role does not exist. That's the expected result, so there's
+  # nothing additional to do
   pass  
 
 
+# Create the policy and role. Note, in actual usage, you should wrap these calls
+# in try/except blocks and validate the responses. 
+#
 # Create the policy
 policy = iam.create_policy(
   PolicyName=create_connector_policy_name,
@@ -101,5 +113,4 @@ iam.attach_role_policy(
 
 print(f'Created policy {policy_arn}')
 print(f'Created role {role_arn}')
-
 print(f'\nPlease execute the following command\nexport CREATE_DEEPSEEK_CONNECTOR_ROLE="{role_arn}"\n')
