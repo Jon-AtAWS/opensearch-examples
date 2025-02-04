@@ -39,7 +39,7 @@ payload = {
   },
   "parameters": {
     "service_name": "sagemaker",
-    "region": "us-west-2",
+    "region": region,
     "do_sample": True,
     "top_p": 0.9,
     "temperature": 0.7,
