@@ -1,6 +1,13 @@
 # Copyright opensearch-examples contributors
 # SPDX-License-Identifier: Apache-2.0
+'''
+Loads a data set into OpenSearch Service to serve as a knowledge base for
+RAG retrieval. This code uses the OpenSearch Python client, provided by  
+opensearch-py, to call OpenSearch's _bulk API with the data. 
 
+It creates embeddings for the documents to support semantic search for
+the retrieval via an ingest pipeline. 
+'''
 
 from opensearchpy import OpenSearch
 import os
@@ -14,12 +21,17 @@ embedding_model_id = os.environ['EMBEDDING_MODEL_ID']
 index_name = "population_data"
 
 
+# Ensure the endpoint matches the contract for the opensearch-py client. Endpoints
+# are specified without the leading URL scheme or trailing slashes.
 if opensearch_service_api_endpoint.startswith('https://'):
   opensearch_service_api_endpoint = opensearch_service_api_endpoint[len('https://'):]
 if opensearch_service_api_endpoint.endswith('/'):
   opensearch_service_api_endpoint = opensearch_service_api_endpoint[:-1]
 
 
+# The mapping sets kNN to true to enable vector search for the index. It defines
+# the text field as type text, and a text_embedding field that uses the FAISS engine
+# for storage and retrieval, using the HNSW algorithm.
 mapping = {
     "settings": {
         "index": {
@@ -46,6 +58,7 @@ mapping = {
 }
 
 
+# The data for the knowledge base.
 population_data = [
   {"index": {"_index": index_name, "_id": "1"}},
   {"text": "Chart and table of population level and growth rate for the Ogden-Layton metro area from 1950 to 2023. United Nations population projections are also included through the year 2035.\nThe current metro area population of Ogden-Layton in 2023 is 750,000, a 1.63% increase from 2022.\nThe metro area population of Ogden-Layton in 2022 was 738,000, a 1.79% increase from 2021.\nThe metro area population of Ogden-Layton in 2021 was 725,000, a 1.97% increase from 2020.\nThe metro area population of Ogden-Layton in 2020 was 711,000, a 2.16% increase from 2019."},
@@ -62,6 +75,10 @@ population_data = [
 ]
 
 
+# OpenSearch ingest pipelines let you define processors to apply to your documents at ingest
+# time. The text_embedding processor lets you select a source field and a destination field
+# for the embedding. At ingest, OpenSearch will call the model, via its model id, to 
+# generate the embedding.
 ingest_pipeline_definition = {
   "processors": [
     {
@@ -76,6 +93,7 @@ ingest_pipeline_definition = {
 }
 
 
+# Set up for the client to call OpenSearch Service
 hosts = [{"host": opensearch_service_api_endpoint, "port": opensearch_port}]
 client = OpenSearch(
     hosts=hosts,
@@ -87,16 +105,20 @@ client = OpenSearch(
 )
 
 
+# Check whether an index already exists with the chosen name. If you receive an 
+# exception, change the index name in the global variable above, and be sure 
+# also to change the index_name global variable in run_rag.py
 if client.indices.exists(index=index_name) == 200:
   raise Exception(f'Index {index_name} already exists. Please choose a different name in load_data.py. Be sure to change the index_name in run_rag.py as well.')
 
-client.indices.delete(index=index_name, ignore=[400, 404])
+# This code does not validate the response. In actual use, you should wrap this
+# block in try/except and validate the response. 
 client.indices.create(index=index_name, body=mapping)
-
 r = client.ingest.put_pipeline(id="embedding_pipeline", 
                                body=ingest_pipeline_definition)
-
 client.bulk(index=index_name, 
             body=population_data,
             pipeline="embedding_pipeline", 
             refresh=True)
+
+print(f'Loaded data into {index_name}')
