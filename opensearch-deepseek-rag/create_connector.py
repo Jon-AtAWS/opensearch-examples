@@ -1,5 +1,11 @@
 # Copyright opensearch-examples contributors
 # SPDX-License-Identifier: Apache-2.0
+'''
+This module uses the requests library and the AWS4Auth library to send a
+signed request to your OpenSearch Service domain creating a connector to
+your SageMaker endpoint. SageMaker hosts DeepSeek R1 text generation model
+for use in the run_rag.py example.
+'''
 
 
 import boto3
@@ -15,6 +21,7 @@ create_deepseek_connector_role_arn = os.environ['CREATE_DEEPSEEK_CONNECTOR_ROLE'
 sagemaker_endpoint_url = os.environ['SAGEMAKER_MODEL_INFERENCE_ENDPOINT']
 
 
+# Create the AWS4Auth object that will sign the create connector API call. 
 credentials = boto3.client('sts').assume_role(
     RoleArn=create_deepseek_connector_role_arn,
     RoleSessionName='create_connector_session'
@@ -26,9 +33,12 @@ awsauth = AWS4Auth(credentials['AccessKeyId'],
                    session_token=credentials['SessionToken'])
 
 
+# Prepare the API call parameters. 
 path = '/_plugins/_ml/connectors/_create'
 url = opensearch_service_api_endpoint + path
-
+# See the documentation 
+# https://opensearch.org/docs/latest/ml-commons-plugin/remote-models/blueprints/ for 
+# details on the connector payload, and additional blueprints for other models.
 payload = {
   "name": "DeepSeek R1 model connector v2",
   "description": "Connector for my Sagemaker DeepSeek model",
@@ -59,11 +69,13 @@ payload = {
   ]
 }
 
+# This ignores errors and doesn't check the result. In real use,
+# you should wrap this code with try/except blocks and check the
+# response status code and the response body for errors.
 headers = {"Content-Type": "application/json"}
-
 r = requests.post(url, auth=awsauth, json=payload, headers=headers)
-print(r.text)
 connector_id = json.loads(r.text)['connector_id']
-print(connector_id)
 
+
+print(connector_id)
 print(f'\nPlease execute the following command\nexport DEEPSEEK_CONNECTOR_ID="{connector_id}"\n')
