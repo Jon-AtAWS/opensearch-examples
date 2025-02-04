@@ -1,5 +1,16 @@
 # Copyright opensearch-examples contributors
 # SPDX-License-Identifier: Apache-2.0
+'''
+This module creates an OpenSearch model 
+(see: https://opensearch.org/docs/latest/ml-commons-plugin/api/model-apis/index/)
+that you use to connect to SageMaker/DeepSeek. It
+uses the requests library with username/password authentication to call OpenSearch's
+REST API directly.
+
+As a side effect, OpenSearch automatically creates a model group for the model. Model
+groups (see: https://opensearch.org/docs/latest/ml-commons-plugin/api/model-group-apis/index/)
+help you control access to your OpenSearch models.
+'''
 
 
 import os
@@ -14,6 +25,7 @@ connector_id = os.environ['DEEPSEEK_CONNECTOR_ID']
 create_deepseek_connector_role = os.environ['CREATE_DEEPSEEK_CONNECTOR_ROLE']
 
 
+# Set up user/password auth
 userauth = (opensearch_user_name, opensearch_user_password)
 headers = {"Content-Type": "application/json"}
 
