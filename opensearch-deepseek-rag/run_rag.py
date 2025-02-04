@@ -1,6 +1,11 @@
 # Copyright opensearch-examples contributors
 # SPDX-License-Identifier: Apache-2.0
-
+'''
+Uses an OpenSearch search processor to perform retrieval augmented generation. First,
+define the processor, and send to OpenSearch with the opensearch-py client. Then send 
+a query through the pipeline, encapsulating a user question and engaging an langauge
+generation model to respond.
+'''
 
 from opensearchpy import OpenSearch
 import os
@@ -12,15 +17,19 @@ opensearch_user_name = os.environ['OPENSEARCH_SERVICE_ADMIN_USER']
 opensearch_user_password = os.environ['OPENSEARCH_SERVICE_ADMIN_PASSWORD']
 embedding_model_id = os.environ['EMBEDDING_MODEL_ID']
 generation_model_id = os.environ['DEEPSEEK_MODEL_ID']
+# Note: if you changed the index name in load_data.py, be sure to change it here.
 index_name = "population_data"
 
 
+# Ensure the endpoint matches the contract for the opensearch-py client. Endpoints
+# are specified without the leading URL scheme or trailing slashes.
 if opensearch_service_api_endpoint.startswith('https://'):
   opensearch_service_api_endpoint = opensearch_service_api_endpoint[len('https://'):]
 if opensearch_service_api_endpoint.endswith('/'):
   opensearch_service_api_endpoint = opensearch_service_api_endpoint[:-1]
 
 
+# Prepare the client with username/password authetication
 hosts = [{"host": opensearch_service_api_endpoint, "port": opensearch_port}]
 client = OpenSearch(
     hosts=hosts,
@@ -32,6 +41,8 @@ client = OpenSearch(
 )
 
 
+# The search pipeline uses a retrieval_augmented_generation processor to
+# send the question and search results for a generated response.
 search_pipeline_definition = {
   "response_processors": [
     {
@@ -50,6 +61,10 @@ search_pipeline_definition = {
 }
 
 
+# The neural query uses the embedding model to generate an embedding for the query_text
+# and performs a kNN query to get nearest-neighbor matches. Note we set the size query
+# parameter to 2, with k=5. These are very tight constraints that work for this example.
+# In actual use, you would set both k and size higher.
 query = {
   "query": {
     "neural": {
@@ -64,6 +79,10 @@ query = {
   "_source": [
     "text"
   ],
+  # In this case, you use the "bedrock/claude" parameterization of the connector
+  # template. The connector itself sends the request to the SageMaker endpoint,
+  # hosting DeepSeek in the example. Stay tuned for a DeepSeek connector blueprint
+  # in the blueprints repository.
   "ext": {
     "generative_qa_parameters": {
       "llm_model": "bedrock/claude",
@@ -75,8 +94,11 @@ query = {
 }
 
 
+# Put the search pipeline, and send the query to it. 
 client.search_pipeline.put(id='deepseek_rag_pipeline',
                            body=search_pipeline_definition)
-
-resp = client.search(body=query, index=index_name, search_pipeline="deepseek_rag_pipeline", timeout=300)
+resp = client.search(body=query,
+                     index=index_name, 
+                     search_pipeline="deepseek_rag_pipeline",
+                     timeout=300)
 print(resp)
