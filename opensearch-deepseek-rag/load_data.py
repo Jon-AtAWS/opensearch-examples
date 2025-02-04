@@ -87,7 +87,8 @@ client = OpenSearch(
 )
 
 
-if client.indices.exists(index=index_name):
+exists = client.indices.exists(index=index_name)
+if exists.status_code == 200:
   raise Exception(f'Index {index_name} already exists. Please choose a different name in load_data.py. Be sure to change the index_name in run_rag.py as well.')
 
 client.indices.delete(index=index_name, ignore=[400, 404])
