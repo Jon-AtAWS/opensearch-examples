@@ -12,7 +12,7 @@ opensearch_service_api_endpoint = os.environ['OPENSEARCH_SERVICE_DOMAIN_ENDPOINT
 region = os.environ['DEEPSEEK_AWS_REGION']
 invoke_role_arn = os.environ['INVOKE_DEEPSEEK_ROLE']
 create_deepseek_connector_role_arn = os.environ['CREATE_DEEPSEEK_CONNECTOR_ROLE']
-sagemaker_endpoint_url = os.environ['DEEPSEEK_SAGEMAKER_ENDPOINT_URL']
+sagemaker_endpoint_url = os.environ['SAGEMAKER_MODEL_INFERENCE_ENDPOINT']
 
 
 credentials = boto3.client('sts').assume_role(
