@@ -14,6 +14,12 @@ embedding_model_id = os.environ['EMBEDDING_MODEL_ID']
 index_name = "population_data"
 
 
+if opensearch_service_api_endpoint.startswith('https://'):
+  opensearch_service_api_endpoint = opensearch_service_api_endpoint[len('https://'):]
+if opensearch_service_api_endpoint.endswith('/'):
+  opensearch_service_api_endpoint = opensearch_service_api_endpoint[:-1]
+
+
 mapping = {
     "settings": {
         "index": {
