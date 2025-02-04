@@ -7,13 +7,19 @@ import json
 import os
 
 
+# This script will create a role and policy document with 
+# the following names.
 create_connector_policy_name = 'create_deepseek_connector_policy'
 create_connector_role_name = 'create_deepseek_connector_role'
 
+# Read environment variables for the invoke role, and the domain ARNs.
 invoke_connector_role_arn = os.environ['INVOKE_DEEPSEEK_ROLE']
 opensearch_service_domain_arn = os.environ['OPENSEARCH_SERVICE_DOMAIN_ARN']
 
 
+# This policy will allow post operations on the OpenSearch Service
+# domain. It adds a pass role so that OpenSearch can validate the
+# connector.
 policy = {
   "Version": "2012-10-17",
   "Statement": [
@@ -31,6 +37,10 @@ policy = {
 }
 
 
+# Pulls the current user ARN from Boto's entity resolution, based
+# on either aws configure, or environment variables. This role,
+# with the policy above enables you to call OpenSearch's
+# create_connector API
 current_user_arn = boto3.resource('iam').CurrentUser().arn
 trust_relationship = {
   "Version": "2012-10-17",
@@ -55,22 +65,22 @@ try:
   account_id = sts.get_caller_identity()['Account']
   policy_arn = f'arn:aws:iam::{account_id}:policy/{create_connector_policy_name}'
   existing_policy = iam.get_policy(PolicyArn=policy_arn)['Policy']
+  if existing_policy:
+    raise Exception(f"Policy {create_connector_policy_name} already exists. Please set another policy name")
 except iam.exceptions.NoSuchEntityException:
   pass
 
-if existing_policy:
-  raise Exception(f"Policy {create_connector_policy_name} already exists. Please set another policy name")
 
-
+existing_role = None
 try:
   existing_role = iam.get_role(RoleName=create_connector_role_name)
+  if existing_role:
+    raise Exception(f"Role {create_connector_role_name} already exists. Please set another role name")
 except iam.exceptions.NoSuchEntityException:
-  existing_role = None
-
-if existing_role:
-  raise Exception(f"Role {create_connector_role_name} already exists. Please set another role name")
+  pass  
 
 
+# Create the policy
 policy = iam.create_policy(
   PolicyName=create_connector_policy_name,
   PolicyDocument=json.dumps(policy)
@@ -78,6 +88,7 @@ policy = iam.create_policy(
 policy_arn = policy['Policy']['Arn']
 
 
+# Create the role
 role = iam.create_role(
   RoleName=create_connector_role_name,
   AssumeRolePolicyDocument=json.dumps(trust_relationship)
